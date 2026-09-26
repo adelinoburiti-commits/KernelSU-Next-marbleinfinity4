@@ -20,8 +20,8 @@
       "repo": "android_kernel_xiaomi_sm8450-devicetrees"
     }
   },
-  "aospa-pablo": {
-    "branch": "beryl",
+  "clo-marble": {
+    "branch": "calcite",
     "kernel": {
       "repo": "android_kernel_xiaomi_sm8450",
       "defconfig": "gki_defconfig",
