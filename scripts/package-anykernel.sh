@@ -34,7 +34,7 @@ esac
 
 case "${KERNEL_SOURCE}" in
   aosp-pablo)  preset_prefix="" ;;
-  aospa-pablo) preset_prefix="aospa-" ;;
+  clo-marble)  preset_prefix="aospa-" ;;
   *)           preset_prefix="$(sanitize_token "${KERNEL_SOURCE}")-" ;;
 esac
 

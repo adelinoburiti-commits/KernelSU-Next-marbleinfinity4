@@ -29,7 +29,7 @@ on:
         default: aosp-pablo
         options:
           - aosp-pablo
-          - aospa-pablo
+          - clo-marble
       source_ref:
         description: "Override branch/tag/commit (empty = preset default)"
         required: false

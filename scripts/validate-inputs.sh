@@ -78,14 +78,10 @@ if [[ "${ENABLE_SUSFS}" == "true" ]]; then
       echo "::error::Official tiann/KernelSU does not support SUSFS."
       exit 1
       ;;
-    kernelsu-next)
-      [[ -z "${MANAGER_REF}" || "${MANAGER_REF}" == "dev-susfs" ]] || { echo "::error::KernelSU-Next + SUSFS requires pershoot dev-susfs ref"; exit 1; }
-      ;;
-    sukisu-ultra)
-      [[ -z "${MANAGER_REF}" || "${MANAGER_REF}" == "builtin" ]] || { echo "::error::SukiSU Ultra + SUSFS requires official ref builtin"; exit 1; }
-      ;;
-    resukisu)
-      [[ -z "${MANAGER_REF}" || "${MANAGER_REF}" == "main" ]] || { echo "::error::ReSukiSU + SUSFS requires official ref main"; exit 1; }
+    kernelsu-next|sukisu-ultra|resukisu)
+      if [[ -n "${MANAGER_REF}" ]]; then
+        echo "::warning::MANAGER_REF override ignored when SUSFS enabled; using manager's SUSFS ref"
+      fi
       ;;
   esac
 fi

@@ -21,7 +21,7 @@ susfs_reported_version=""
 susfs_url=""
 
 manager_repo="$(jq -r --arg manager "${MANAGER}" '.[$manager].repo' config/managers.json)"
-manager_default_ref="$(jq -r --arg manager "${MANAGER}" '.[$manager].ref' config/managers.json)"
+manager_default_ref="$(jq -r --arg manager "${MANAGER}" '.[$manager].ref // empty' config/managers.json)"
 
 if [[ "${ENABLE_SUSFS}" == "true" ]]; then
   susfs_repo_override="$(jq -r --arg manager "${MANAGER}" '.[$manager].susfs.repo // empty' config/managers.json)"
@@ -32,6 +32,15 @@ if [[ "${ENABLE_SUSFS}" == "true" ]]; then
   if [[ -n "${susfs_ref_override}" ]]; then
     manager_default_ref="${susfs_ref_override}"
   fi
+fi
+
+if [[ -z "${manager_default_ref}" ]]; then
+  if command -v gh >/dev/null 2>&1; then
+    manager_default_ref="$(gh api "repos/${manager_repo}" --jq .default_branch)"
+  else
+    manager_default_ref="$(git ls-remote --symref "https://github.com/${manager_repo}.git" HEAD 2>/dev/null | awk '/^ref: / { sub("refs/heads/", "", $2); print $2; exit }')"
+  fi
+  [[ -z "${manager_default_ref}" ]] && manager_default_ref="main"
 fi
 
 manager_effective_ref="${MANAGER_REF:-${manager_default_ref}}"
