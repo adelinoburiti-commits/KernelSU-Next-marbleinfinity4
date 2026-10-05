@@ -10,7 +10,7 @@ KERNEL_SOURCE="${KERNEL_SOURCE:-}"
 MANAGER_REF="${MANAGER_REF:-}"
 
 case "${MANAGER}" in
-  kernelsu|kernelsu-next|sukisu-ultra|resukisu) ;;
+  kernelsu|kernelsu-next) ;;
   *) echo "::error::Unsupported manager: ${MANAGER}"; exit 1 ;;
 esac
 
@@ -78,7 +78,7 @@ if [[ "${ENABLE_SUSFS}" == "true" ]]; then
       echo "::error::Official tiann/KernelSU does not support SUSFS."
       exit 1
       ;;
-    kernelsu-next|sukisu-ultra|resukisu)
+    kernelsu-next)
       if [[ -n "${MANAGER_REF}" ]]; then
         echo "::warning::MANAGER_REF override ignored when SUSFS enabled; using manager's SUSFS ref"
       fi

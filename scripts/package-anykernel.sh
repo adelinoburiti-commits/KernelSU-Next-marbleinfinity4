@@ -27,8 +27,6 @@ sanitize_token() {
 case "${MANAGER}" in
   kernelsu)      manager_token="ksun" ;;
   kernelsu-next) manager_token="ksunext" ;;
-  sukisu-ultra)  manager_token="sukisu" ;;
-  resukisu)      manager_token="resukisu" ;;
   *)             manager_token="$(sanitize_token "${MANAGER}")" ;;
 esac
 

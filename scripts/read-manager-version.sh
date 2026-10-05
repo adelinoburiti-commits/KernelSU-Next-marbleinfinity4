@@ -22,9 +22,6 @@ write_empty() {
 manager_root_candidates=(
   "${KERNEL_DIR}/KernelSU-Next"
   "${KERNEL_DIR}/KernelSU"
-  "${KERNEL_DIR}/SukiSU-Ultra"
-  "${KERNEL_DIR}/SukiSU"
-  "${KERNEL_DIR}/ReSukiSU"
   "${KERNEL_DIR}/drivers/kernelsu"
 )
 
@@ -39,9 +36,6 @@ done
 makefile_candidates=(
   "${KERNEL_DIR}/KernelSU-Next/kernel/Makefile"
   "${KERNEL_DIR}/KernelSU/kernel/Makefile"
-  "${KERNEL_DIR}/SukiSU-Ultra/kernel/Makefile"
-  "${KERNEL_DIR}/SukiSU/kernel/Makefile"
-  "${KERNEL_DIR}/ReSukiSU/kernel/Makefile"
   "${KERNEL_DIR}/drivers/kernelsu/Makefile"
 )
 if [[ -n "${manager_root}" && -f "${manager_root}/kernel/Makefile" ]]; then
@@ -73,7 +67,7 @@ wild_base_for_manager() {
     kernelsu)
       echo "${MANAGER_VERSION_BASE:-30000}"
       ;;
-    kernelsu-next|sukisu-ultra|resukisu)
+    kernelsu-next)
       # Wild KSUN: older histories use 10200, newer use 30000 past ~2684 commits.
       if [[ -n "${MANAGER_VERSION_BASE:-}" ]]; then
         echo "${MANAGER_VERSION_BASE}"

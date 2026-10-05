@@ -81,7 +81,7 @@ if [[ -z "${manager_kconfig}" && -L "common/drivers/kernelsu" ]]; then
 fi
 # Fallback to direct paths
 if [[ -z "${manager_kconfig}" ]]; then
-  for candidate in KernelSU/kernel/Kconfig KernelSU-Next/kernel/Kconfig SukiSU-Ultra/kernel/Kconfig SukiSU/kernel/Kconfig ReSukiSU/kernel/Kconfig drivers/kernelsu/Kconfig common/drivers/kernelsu/Kconfig; do
+  for candidate in KernelSU/kernel/Kconfig KernelSU-Next/kernel/Kconfig drivers/kernelsu/Kconfig common/drivers/kernelsu/Kconfig; do
     if [[ -f "${candidate}" ]]; then
       manager_kconfig="${candidate}"
       break

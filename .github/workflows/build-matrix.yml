@@ -15,14 +15,6 @@ on:
         description: "Build: KernelSU-Next"
         type: boolean
         default: false
-      build_sukisu_ultra:
-        description: "Build: SukiSU Ultra"
-        type: boolean
-        default: false
-      build_resukisu:
-        description: "Build: ReSukiSU"
-        type: boolean
-        default: false
       kernel_source:
         description: "Kernel source preset"
         type: choice
@@ -98,8 +90,6 @@ jobs:
           BUILD_ALL: ${{ inputs.build_all }}
           BUILD_KERNELSU: ${{ inputs.build_kernelsu }}
           BUILD_KERNELSU_NEXT: ${{ inputs.build_kernelsu_next }}
-          BUILD_SUKISU_ULTRA: ${{ inputs.build_sukisu_ultra }}
-          BUILD_RESUKISU: ${{ inputs.build_resukisu }}
           ENABLE_SUSFS: ${{ inputs.enable_susfs }}
         run: |
           matrix="$(bash scripts/generate-build-matrix.sh)"
@@ -562,8 +552,6 @@ jobs:
 
           - KernelSU
           - KernelSU Next + SUSFS
-          - ReSukiSU + SUSFS
-          - SukiSU Ultra + SUSFS
 
           See `sha256sum.txt` for checksum verification.
           EOF

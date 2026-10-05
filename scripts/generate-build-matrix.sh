@@ -18,8 +18,6 @@ enable_susfs_override = os.environ.get("ENABLE_SUSFS", "")
 selected = [
     ("kernelsu", os.environ.get("BUILD_KERNELSU", "false")),
     ("kernelsu-next", os.environ.get("BUILD_KERNELSU_NEXT", "false")),
-    ("sukisu-ultra", os.environ.get("BUILD_SUKISU_ULTRA", "false")),
-    ("resukisu", os.environ.get("BUILD_RESUKISU", "false")),
 ]
 
 include = []
