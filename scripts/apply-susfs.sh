@@ -22,7 +22,6 @@ susfs_dir="${work_root}/susfs4ksu"
 git clone "${SUSFS_REPO}" "${susfs_dir}"
 git -C "${susfs_dir}" checkout "${susfs_commit}"
 
-# Debug: show kernel_patches structure
 echo "=== SUSFS kernel_patches structure ==="
 find "${susfs_dir}/kernel_patches" -type f -name "*.h" 2>/dev/null | head -20
 echo "=== SUSFS include/linux ==="
@@ -34,7 +33,6 @@ if [[ ! -d "${patch_root}" ]]; then
   exit 1
 fi
 
-# Debug: show patch_root contents
 echo "=== patch_root contents ==="
 ls -la "${patch_root}/"
 echo "=== patch_root/include ==="
@@ -55,31 +53,26 @@ fi
 rsync -a "${susfs_dir}/kernel_patches/fs/" fs/
 rsync -a "${susfs_dir}/kernel_patches/include/" include/
 
-# Debug: verify susfs headers were copied
 echo "=== Verifying SUSFS headers copied ==="
 ls -la include/linux/susfs*.h 2>/dev/null || echo "susfs headers NOT found in include/linux/"
 find include -name "susfs*" -type f 2>/dev/null || echo "No susfs files found in include/"
 
-# Also verify the susfs.c was copied to fs/
 echo "=== Verifying susfs.c copied ==="
 ls -la fs/susfs.c 2>/dev/null || echo "susfs.c NOT found in fs/"
 
 manager_kconfig=""
-# Check symlink target first for KernelSU (drivers/kernelsu -> KernelSU/kernel)
 if [[ -L "drivers/kernelsu" ]]; then
   target="$(readlink drivers/kernelsu)"
   if [[ -f "${target}/Kconfig" ]]; then
     manager_kconfig="${target}/Kconfig"
   fi
 fi
-# Check common/drivers for GKI kernels
 if [[ -z "${manager_kconfig}" && -L "common/drivers/kernelsu" ]]; then
   target="$(readlink common/drivers/kernelsu)"
   if [[ -f "${target}/Kconfig" ]]; then
     manager_kconfig="${target}/Kconfig"
   fi
 fi
-# Fallback to direct paths
 if [[ -z "${manager_kconfig}" ]]; then
   for candidate in KernelSU/kernel/Kconfig KernelSU-Next/kernel/Kconfig drivers/kernelsu/Kconfig common/drivers/kernelsu/Kconfig; do
     if [[ -f "${candidate}" ]]; then

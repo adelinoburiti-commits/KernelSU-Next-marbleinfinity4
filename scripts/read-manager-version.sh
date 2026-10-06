@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Resolve a numeric manager version code for packaging / summaries.
-# Strategy (WildKernels-inspired):
-#   1) Prefer Wild-style: git rev-list --count + BASE_VERSION, inject into Makefile
-#   2) Fallback: literal KERNELSU_VERSION / KSU_VERSION in Makefile
-# Soft warnings only — never fail the build if version cannot be resolved.
-
 MANAGER="${MANAGER:-kernelsu-next}"
 KERNEL_DIR="${KERNEL_DIR:-kernel-source}"
 RESOLVED_REFS_FILE="${RESOLVED_REFS_FILE:-release/resolved-refs.env}"
@@ -59,8 +53,6 @@ if [[ -z "${manager_makefile}" ]]; then
   exit 0
 fi
 
-# Wild-style BASE_VERSION by manager family (matches common KSUN/KSU CI practice).
-# Overridable via MANAGER_VERSION_BASE for experiments.
 wild_base_for_manager() {
   local commits="$1"
   case "${MANAGER}" in
@@ -68,7 +60,6 @@ wild_base_for_manager() {
       echo "${MANAGER_VERSION_BASE:-30000}"
       ;;
     kernelsu-next)
-      # Wild KSUN: older histories use 10200, newer use 30000 past ~2684 commits.
       if [[ -n "${MANAGER_VERSION_BASE:-}" ]]; then
         echo "${MANAGER_VERSION_BASE}"
       elif (( commits < 2684 )); then
@@ -83,7 +74,6 @@ wild_base_for_manager() {
   esac
 }
 
-# Find a git directory to count commits (manager root or makefile dir).
 git_dir_for_count=""
 for d in "${manager_root}" "$(dirname "${manager_makefile}")" "$(dirname "$(dirname "${manager_makefile}")")"; do
   [[ -z "${d}" ]] && continue
@@ -101,8 +91,6 @@ if [[ -n "${git_dir_for_count}" ]]; then
     manager_version_method="wild-revlist"
     echo "Wild-style manager version: commits=${commits_count} base=${base_version} code=${manager_version_code} (git: ${git_dir_for_count})"
 
-    # Inject into Makefile so the built manager reports the same code (Wild pattern).
-    # Common placeholders seen in KernelSU-family Makefiles.
     if grep -qE 'DKSU_VERSION\s*[?:]?=' "${manager_makefile}" 2>/dev/null; then
       sed -i -E "s/(DKSU_VERSION\\s*[?:]?=\\s*)[0-9]+/\\1${manager_version_code}/" "${manager_makefile}" || true
       echo "Injected DKSU_VERSION=${manager_version_code} into ${manager_makefile}"
@@ -118,7 +106,6 @@ if [[ -n "${git_dir_for_count}" ]]; then
   fi
 fi
 
-# Fallback: literal numeric assignment already in Makefile (previous Marble behavior).
 if [[ -z "${manager_version_code}" ]]; then
   manager_version_code="$(
     sed -nE 's/^[[:space:]]*(export[[:space:]]+)?(KERNELSU_VERSION|KSU_VERSION|DKSU_VERSION)[[:space:]]*[?:]?=[[:space:]]*([0-9]+)[[:space:]]*$/\3/p' \
@@ -139,7 +126,6 @@ fi
 {
   echo "manager_version_code=${manager_version_code}"
   echo "manager_version_method=${manager_version_method}"
-  # Seed build metadata early so ZIP naming works even if log parse is empty.
   echo "manager_build_version_code=${manager_version_code}"
 } >> "${RESOLVED_REFS_FILE}"
 

@@ -13,9 +13,6 @@ fi
 
 pushd "${KERNEL_DIR}" >/dev/null
 
-# If the kernel tree already ships a KernelSU (tracked submodule, empty/stale directory,
-# old symlink), remove it first. Upstream setup.sh only clones when the directory is
-# missing; otherwise its git commands run against the KERNEL repo and nothing is set up.
 echo "Removing any existing KernelSU from the kernel tree..."
 git submodule deinit -f KernelSU KernelSU-Next >/dev/null 2>&1 || true
 rm -rf KernelSU KernelSU-Next common/KernelSU common/KernelSU-Next
@@ -46,7 +43,6 @@ for d in KernelSU KernelSU-Next; do
   fi
 done
 
-# Verify manager integration was applied (both managers use the drivers/kernelsu symlink)
 kernelsu_path=""
 for path in "drivers/kernelsu" "common/drivers/kernelsu"; do
   if [[ -L "${path}" || -d "${path}" ]]; then

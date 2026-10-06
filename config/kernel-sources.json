@@ -1,6 +1,6 @@
 {
   "aosp-pablo": {
-    "branch": "16",
+    "branch": "17",
     "kernel": {
       "repo": "android_kernel_xiaomi_sm8450",
       "defconfig": "gki_defconfig",

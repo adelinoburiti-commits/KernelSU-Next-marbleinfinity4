@@ -11,11 +11,6 @@ JOBS="${JOBS:-$(nproc)}"
 USE_CCACHE="${USE_CCACHE:-true}"
 TOOLCHAIN="${TOOLCHAIN:-android-r416183b}"
 
-# Free GitHub-hosted runners (~7 GiB) often OOM (exit 137) while linking vmlinux
-# with LLVM 22 at full -j$(nproc). Cap parallelism for the heavy toolchain.
-# Free defaults: LLVM JOBS<=2, THINLTO_JOBS=2 (see ThinLTO wrapper below).
-# Self-hosted override examples:
-#   JOBS_FORCE=1 JOBS=8 THINLTO_JOBS=4
 if [[ -z "${JOBS_FORCE:-}" ]]; then
   if [[ "${TOOLCHAIN}" == "llvm-22.1.8" ]] && (( JOBS > 2 )); then
     echo "Capping JOBS from ${JOBS} to 2 for ${TOOLCHAIN} (OOM-safe on free runners)"
@@ -107,8 +102,6 @@ if [[ "${ENABLE_SUSFS}" == "true" ]]; then
   scripts/config --file "${OUT_DIR}/.config" -e KSU_SUSFS
 fi
 
-# Apply selectable Clang LTO for all presets (including gki_fragments / Melt).
-# Default thin is free-runner safe with swap + thinlto job caps; full needs more RAM.
 LTO="${LTO:-thin}"
 echo "Applying LTO mode: ${LTO}" | tee -a "${RELEASE_DIR}/build.log"
 case "${LTO}" in
@@ -150,9 +143,7 @@ if [[ "${BUILD_SCOPE}" == "full" ]]; then
 fi
 
 if [[ "${LTO}" == "thin" ]]; then
-  # Cap ThinLTO parallel codegen on free runners (~7 GiB) to avoid OOM during link.
   THINLTO_JOBS="${THINLTO_JOBS:-2}"
-  # WildKernels-style durable ThinLTO cache (restored/saved by the workflow when present).
   THINLTO_CACHE_DIR="${THINLTO_CACHE_DIR:-${HOME}/.cache/thinlto}"
   mkdir -p "${THINLTO_CACHE_DIR}"
   wrapper="$(pwd)/${RELEASE_DIR}/ld-thinlto-wrapper"
@@ -193,7 +184,6 @@ for file in System.map vmlinux; do
   fi
 done
 
-# Package DTBs for vendor_boot (concatenated for AnyKernel3)
 if find "${OUT_DIR}/arch/arm64/boot/dts" -name '*.dtb' -print -quit | grep -q .; then
   find "${OUT_DIR}/arch/arm64/boot/dts" -name '*.dtb' -exec cat {} + > "${RELEASE_DIR}/dtb"
   echo "Packaged dtb ($(stat -c%s "${RELEASE_DIR}/dtb") bytes from $(find "${OUT_DIR}/arch/arm64/boot/dts" -name '*.dtb' | wc -l) files)" | tee -a "${RELEASE_DIR}/build.log"
