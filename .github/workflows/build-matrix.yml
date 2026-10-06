@@ -121,6 +121,8 @@ jobs:
       MANAGER: ${{ matrix.manager }}
       MANAGER_REF: ""
       ENABLE_SUSFS: ${{ fromJSON(matrix.enable_susfs) }}
+      ENABLE_NOMOUNT: "true"
+      NOMOUNT_REF: "v2.0.0"
       BUILD_SCOPE: ${{ inputs.build_scope }}
       KERNEL_DIR: kernel-source
       CCACHE_DIR: /home/runner/.ccache
