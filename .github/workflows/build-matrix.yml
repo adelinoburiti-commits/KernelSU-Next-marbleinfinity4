@@ -122,7 +122,7 @@ jobs:
       MANAGER_REF: ""
       ENABLE_SUSFS: ${{ fromJSON(matrix.enable_susfs) }}
       ENABLE_NOMOUNT: "true"
-      NOMOUNT_REF: "v2.0.0"
+      NOMOUNT_REF: "v2.1.0"
       BUILD_SCOPE: ${{ inputs.build_scope }}
       KERNEL_DIR: kernel-source
       CCACHE_DIR: /home/runner/.ccache
@@ -157,6 +157,40 @@ jobs:
           path: kernel-source
           fetch-depth: 1
           persist-credentials: false
+
+      - name: Integrate NoMount v2.1.0
+        if: ${{ env.ENABLE_NOMOUNT == 'true' }}
+        working-directory: kernel-source
+        env:
+          NOMOUNT_REF: ${{ env.NOMOUNT_REF }}
+        run: |
+          set -euo pipefail
+
+          test -d fs || { echo "::error::Kernel tree has no fs/ directory"; exit 1; }
+          test -f fs/Kconfig || { echo "::error::fs/Kconfig not found"; exit 1; }
+          test -f fs/Makefile || { echo "::error::fs/Makefile not found"; exit 1; }
+
+          echo "Integrating NoMount ${NOMOUNT_REF}"
+          curl --fail --location --retry 3 --retry-delay 2 \
+            "https://raw.githubusercontent.com/maxsteeel/nomount/${NOMOUNT_REF}/kernel/setup.sh" \
+            | bash -s -- "${NOMOUNT_REF}"
+
+          test -L fs/nomount || { echo "::error::fs/nomount symlink was not created"; exit 1; }
+          test -f fs/nomount/Kconfig || { echo "::error::NoMount Kconfig is missing"; exit 1; }
+          grep -Fq 'obj-$(CONFIG_NOMOUNT) += nomount/' fs/Makefile || {
+            echo "::error::NoMount entry missing from fs/Makefile"; exit 1;
+          }
+          grep -Fq 'source "fs/nomount/Kconfig"' fs/Kconfig || {
+            echo "::error::NoMount Kconfig entry missing from fs/Kconfig"; exit 1;
+          }
+
+          expected_commit="$(git -C NoMount rev-parse "${NOMOUNT_REF}^{commit}")"
+          actual_commit="$(git -C NoMount rev-parse HEAD)"
+          if [[ "${actual_commit}" != "${expected_commit}" ]]; then
+            echo "::error::NoMount checkout mismatch: expected ${expected_commit}, got ${actual_commit}"
+            exit 1
+          fi
+          echo "NoMount ${NOMOUNT_REF} integrated successfully at ${actual_commit}."
 
       - name: Checkout additional repos
         run: |
