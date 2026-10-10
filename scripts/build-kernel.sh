@@ -7,6 +7,8 @@ KERNEL_DIR="${KERNEL_DIR:-kernel-source}"
 BUILD_SCOPE="${BUILD_SCOPE:-image-only}"
 MANAGER="${MANAGER:-kernelsu-next}"
 ENABLE_SUSFS="${ENABLE_SUSFS:-false}"
+ENABLE_NOMOUNT="${ENABLE_NOMOUNT:-false}"
+NOMOUNT_REF="${NOMOUNT_REF:-v2.1.0}"
 JOBS="${JOBS:-$(nproc)}"
 USE_CCACHE="${USE_CCACHE:-true}"
 TOOLCHAIN="${TOOLCHAIN:-android-r416183b}"
@@ -28,6 +30,45 @@ export KBUILD_BUILD_HOST="${KBUILD_BUILD_HOST:-github-actions}"
 export CCACHE_DIR="${CCACHE_DIR:-${HOME}/.ccache}"
 export CCACHE_COMPILERCHECK=content
 export CCACHE_NOHASHDIR=true
+
+# ============================================================
+# NoMount v2.1.0 integration (optional)
+# The workflow may have integrated NoMount earlier. Avoid
+# rerunning setup.sh when its symlink and Kconfig/Makefile hooks
+# are already present.
+# ============================================================
+if [[ "${ENABLE_NOMOUNT}" == "true" ]]; then
+  echo "Preparing NoMount ${NOMOUNT_REF}" | tee -a "${RELEASE_DIR}/build.log"
+
+  if [[ ! -e fs/nomount/Kconfig || ! -L fs/nomount ]]; then
+    echo "NoMount integration not found; running upstream setup.sh"
+    curl --fail --location --retry 3 --retry-delay 2 \
+      "https://raw.githubusercontent.com/maxsteeel/nomount/${NOMOUNT_REF}/kernel/setup.sh" \
+      | bash -s -- "${NOMOUNT_REF}"
+  else
+    echo "Existing fs/nomount integration detected; skipping setup.sh"
+  fi
+
+  if [[ ! -e fs/nomount/Kconfig ]]; then
+    echo "::error::NoMount Kconfig not found at fs/nomount/Kconfig"
+    exit 1
+  fi
+  if ! grep -Fq 'obj-$(CONFIG_NOMOUNT) += nomount/' fs/Makefile; then
+    echo "::error::NoMount Makefile entry is missing from fs/Makefile"
+    exit 1
+  fi
+  if ! grep -Fq 'source "fs/nomount/Kconfig"' fs/Kconfig; then
+    echo "::error::NoMount Kconfig source is missing from fs/Kconfig"
+    exit 1
+  fi
+
+  if [[ -d NoMount/.git ]]; then
+    echo "NoMount source revision: $(git -C NoMount rev-parse --short HEAD)" | tee -a "${RELEASE_DIR}/build.log"
+  else
+    echo "::error::NoMount source repository is missing after integration"
+    exit 1
+  fi
+fi
 
 if [[ -n "${ANDROID_CLANG_BIN:-}" ]]; then
   if [[ ! -x "${ANDROID_CLANG_BIN}/clang" ]]; then
@@ -101,6 +142,9 @@ scripts/config --file "${OUT_DIR}/.config" -e KSU
 if [[ "${ENABLE_SUSFS}" == "true" ]]; then
   scripts/config --file "${OUT_DIR}/.config" -e KSU_SUSFS
 fi
+if [[ "${ENABLE_NOMOUNT}" == "true" ]]; then
+  scripts/config --file "${OUT_DIR}/.config" -e NOMOUNT
+fi
 
 LTO="${LTO:-thin}"
 echo "Applying LTO mode: ${LTO}" | tee -a "${RELEASE_DIR}/build.log"
@@ -134,6 +178,11 @@ if ! grep -q '^CONFIG_KSU=y$' "${OUT_DIR}/.config"; then
 fi
 if [[ "${ENABLE_SUSFS}" == "true" ]] && ! grep -q '^CONFIG_KSU_SUSFS=y$' "${OUT_DIR}/.config"; then
   echo "::error::CONFIG_KSU_SUSFS is not enabled in the final kernel config"
+  exit 1
+fi
+if [[ "${ENABLE_NOMOUNT}" == "true" ]] && ! grep -q '^CONFIG_NOMOUNT=y$' "${OUT_DIR}/.config"; then
+  echo "::error::CONFIG_NOMOUNT=y is not enabled in the final kernel config"
+  echo "Check that the NoMount Kconfig integration is compatible with this kernel tree." 
   exit 1
 fi
 
